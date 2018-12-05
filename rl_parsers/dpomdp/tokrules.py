@@ -1,4 +1,5 @@
 tokens = (
+    'NL',
     'COLON',
     'ASTERISK',
     'PLUS',
@@ -62,17 +63,18 @@ def t_NUMBER(t):
 
 
 def t_COMMENT(t):
-    r'\#.*'
-    pass
+    r'\#.*\n'
+    t.lexer.lineno += 1
 
 
 t_ignore = ' \t'
 
 
 # updates line number
-def t_newline(t):
+def t_NL(t):
     r'\n'
     t.lexer.lineno += 1
+    return t
 
 
 def t_error(t):
