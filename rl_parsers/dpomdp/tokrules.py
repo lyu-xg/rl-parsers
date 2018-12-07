@@ -65,6 +65,7 @@ def t_NUMBER(t):
 def t_COMMENT(t):
     r'\#.*\n'
     t.lexer.lineno += 1
+    # t.lexer.lexpos = 0
 
 
 t_ignore = ' \t'
