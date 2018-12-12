@@ -62,19 +62,21 @@ def t_NUMBER(t):
         return t
 
 
-def t_COMMENT(t):
-    r'\#.*\n'
-    t.lexer.lineno += 1
+# def t_COMMENT(t):
+#     r'\#.*\n'
+    # t.lexer.lineno += 1
     # t.lexer.lexpos = 0
+    # t.type = 'NL'
+    # t.value = '\n'
 
 
 t_ignore = ' \t'
 
 
-# updates line number
+# updates line number, comment and newlines all as one
 def t_NL(t):
-    r'\n'
-    t.lexer.lineno += 1
+    r'((\#.*)?\n)+'
+    t.lexer.lineno += t.value.count('\n')
     return t
 
 

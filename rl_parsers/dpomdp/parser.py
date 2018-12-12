@@ -50,7 +50,7 @@ class Parser:
             f'Parsing Error: {p.lineno} {p.lexpos} {p.type} {p.value}')
 
     def p_dpomdp(self, p):
-        """ dpomdp : preamble structure """
+        """ dpomdp : preamble model """
         self.dpomdp = DPOMDP(
             agents=self.agents,
             discount=self.discount,
@@ -78,7 +78,10 @@ class Parser:
 
     def p_preamble_list(self, p):
         """ preamble_list : preamble_list preamble_item
-                          | preamble_item """
+                          | preamble_item
+                          | NL """
+
+    ###
 
     def p_preamble_agents_N(self, p):
         """ preamble_item : AGENTS COLON INT NL """
@@ -299,31 +302,34 @@ class Parser:
 
     ###
 
-    def p_structure(self, p):
-        """ structure : structure_list """
+    def p_model(self, p):
+        """ model : model_list """
 
-    def p_structure_list(self, p):
-        """ structure_list : structure_list structure_item
-                           | """
+    def p_model_list(self, p):
+        """ model_list : model_list model_item
+                       | model_item
+                       | NL """
 
-    def p_structure_t_ass(self, p):
-        """ structure_item : T COLON jaction COLON state COLON state COLON prob NL """
+    ###
+
+    def p_model_t_ass(self, p):
+        """ model_item : T COLON jaction COLON state COLON state COLON prob NL """
         ja, s0, s1, prob = p[3], p[5], p[7], p[9]
         self.T[(*ja, s0, s1)] = prob
 
-    def p_structure_t_as_uniform(self, p):
-        """ structure_item : T COLON jaction COLON state COLON NL UNIFORM NL """
+    def p_model_t_as_uniform(self, p):
+        """ model_item : T COLON jaction COLON state COLON NL UNIFORM NL """
         ja, s0 = p[3], p[5]
         self.T[(*ja, s0)] = 1 / self.nstates
 
-    def p_structure_t_as_reset(self, p):
-        """ structure_item : T COLON jaction COLON state COLON NL RESET NL """
+    def p_model_t_as_reset(self, p):
+        """ model_item : T COLON jaction COLON state COLON NL RESET NL """
         ja, s0 = p[3], p[5]
         self.T[(*ja, s0)] = self.start
         self.reset[(*ja, s0)] = True
 
-    def p_structure_t_as_dist(self, p):
-        """ structure_item : T COLON jaction COLON state COLON NL pvector NL """
+    def p_model_t_as_dist(self, p):
+        """ model_item : T COLON jaction COLON state COLON NL pvector NL """
         ja, s0, pv = p[3], p[5], p[8]
         pv = np.array(pv)
         # TODO postpone tests to end...?
@@ -333,18 +339,18 @@ class Parser:
                               f'{pv.sum()}).')
         self.T[(*ja, s0)] = pv
 
-    def p_structure_t_a_uniform(self, p):
-        """ structure_item : T COLON jaction COLON NL UNIFORM NL """
+    def p_model_t_a_uniform(self, p):
+        """ model_item : T COLON jaction COLON NL UNIFORM NL """
         ja = p[3]
         self.T[ja] = 1 / self.nstates
 
-    def p_structure_t_a_identity(self, p):
-        """ structure_item : T COLON jaction COLON NL IDENTITY NL """
+    def p_model_t_a_identity(self, p):
+        """ model_item : T COLON jaction COLON NL IDENTITY NL """
         ja = p[3]
         self.T[ja] = np.eye(self.nstates)
 
-    def p_structure_t_a_dist(self, p):
-        """ structure_item : T COLON jaction COLON NL pmatrix NL """
+    def p_model_t_a_dist(self, p):
+        """ model_item : T COLON jaction COLON NL pmatrix NL """
         ja, pm = p[3], p[6]
         pm = np.reshape(pm, (self.nstates, self.nstates))
         # TODO postpone tests to end...?
@@ -355,47 +361,47 @@ class Parser:
 
     ###
 
-    def p_structure_o_aso(self, p):
-        """ structure_item : O COLON jaction COLON state COLON jobservation COLON prob NL """
+    def p_model_o_aso(self, p):
+        """ model_item : O COLON jaction COLON state COLON jobservation COLON prob NL """
         ja, s1, jo, pr = p[3], p[5], p[7], p[9]
         self.O[(*ja, s1, *jo)] = pr
 
-    def p_structure_o_as_uniform(self, p):
-        """ structure_item : O COLON jaction COLON state COLON NL UNIFORM NL """
+    def p_model_o_as_uniform(self, p):
+        """ model_item : O COLON jaction COLON state COLON NL UNIFORM NL """
         ja, s1 = p[3], p[5]
         self.O[(*ja, s1)] = 1 / np.prod(self.nobservations)
 
-    def p_structure_o_as_dist(self, p):
-        """ structure_item : O COLON jaction COLON state COLON NL pvector NL """
+    def p_model_o_as_dist(self, p):
+        """ model_item : O COLON jaction COLON state COLON NL pvector NL """
         ja, s1, pv = p[3], p[5], p[8]
         # TODO test probability?
         self.O[(*ja, s1)] = np.reshape(pv, self.nobservations)
 
-    def p_structure_o_a_uniform(self, p):
-        """ structure_item : O COLON jaction COLON NL UNIFORM NL """
+    def p_model_o_a_uniform(self, p):
+        """ model_item : O COLON jaction COLON NL UNIFORM NL """
         ja = p[3]
         self.O[ja] = 1 / np.prod(self.nobservations)
 
-    def p_structure_o_a_dist(self, p):
-        """ structure_item : O COLON jaction COLON NL pmatrix NL """
+    def p_model_o_a_dist(self, p):
+        """ model_item : O COLON jaction COLON NL pmatrix NL """
         ja, pm = p[3], p[6]
         # TODO test probability?
         self.O[ja] = np.reshape(pm, (self.nstates, *self.nobservations))
 
     ###
 
-    def p_structure_r_asso(self, p):
-        """ structure_item : R COLON jaction COLON state COLON state COLON jobservation COLON number NL """
+    def p_model_r_asso(self, p):
+        """ model_item : R COLON jaction COLON state COLON state COLON jobservation COLON number NL """
         ja, s0, s1, jo, r = p[3], p[5], p[7], p[9], p[11]
         self.R[(*ja, s0, s1, *jo)] = r
 
-    def p_structure_r_ass(self, p):
-        """ structure_item : R COLON jaction COLON state COLON state COLON NL nvector NL """
+    def p_model_r_ass(self, p):
+        """ model_item : R COLON jaction COLON state COLON state COLON NL nvector NL """
         ja, s0, s1, rv = p[3], p[5], p[7], p[10]
         self.R[(*ja, s0, s1)] = np.reshape(rv, self.nobservations)
 
-    def p_structure_r_as(self, p):
-        """ structure_item : R COLON jaction COLON state COLON NL nmatrix NL """
+    def p_model_r_as(self, p):
+        """ model_item : R COLON jaction COLON state COLON NL nmatrix NL """
         ja, s0, rm = p[3], p[5], p[8]
         self.R[(*ja, s0)] = np.reshape(rm, (self.nstates, *self.nobservations))
 
